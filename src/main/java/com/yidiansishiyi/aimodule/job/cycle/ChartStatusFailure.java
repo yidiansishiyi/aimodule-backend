@@ -24,10 +24,7 @@ public class ChartStatusFailure {
         LambdaUpdateWrapper<Chart> updateWrapper = Wrappers.lambdaUpdate();
         updateWrapper.set(Chart::getStatus, "failure") // 将status更新为"failure"
                 .lt(Chart::getCreateTime, currentTime) // 创建时间大于当前时间三分钟以上
-                .notIn(Chart::getStatus,"succeed","failure"); // status不等于"succeed"
-//                .ne(Chart::getStatus, "succeed")
-//                .or()
-//                .ne(Chart::getStatus, "failure"); // status不等于"succeed"
+                .notIn(Chart::getStatus,"succeed","failure"); // status 不等于"succeed"和"failure"
 
         int updatedCount = chartMapper.update(null, updateWrapper);
         log.info("更新了 {} 条记录的status为\"failure\"", updatedCount);
