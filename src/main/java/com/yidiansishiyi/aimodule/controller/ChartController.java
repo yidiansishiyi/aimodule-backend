@@ -49,7 +49,7 @@ import java.util.List;
 import java.util.concurrent.*;
 
 /**
- * 帖子接口
+ * 图表接口
  *
  * @author sanqi
  */
