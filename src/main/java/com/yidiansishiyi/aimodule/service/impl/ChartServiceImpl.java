@@ -18,6 +18,7 @@ import com.yidiansishiyi.aimodule.model.dto.chart.CreateChartExcelDTO;
 import com.yidiansishiyi.aimodule.model.dto.chart.GenChartByAiRequest;
 import com.yidiansishiyi.aimodule.model.dto.chart.SaveChatDTO;
 import com.yidiansishiyi.aimodule.model.entity.Chart;
+import com.yidiansishiyi.aimodule.model.entity.User;
 import com.yidiansishiyi.aimodule.model.vo.BiResponse;
 import com.yidiansishiyi.aimodule.model.vo.ChartOriginalVO;
 import com.yidiansishiyi.aimodule.service.ChartService;
@@ -26,6 +27,7 @@ import com.yidiansishiyi.aimodule.service.WmsensitiveService;
 import com.yidiansishiyi.aimodule.utils.DataCleaningUtils;
 import com.yidiansishiyi.aimodule.utils.ExcelUtils;
 import com.yidiansishiyi.aimodule.constant.CommonConstant;
+import com.yidiansishiyi.aimodule.utils.RetryUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.jdbc.SQL;
@@ -37,6 +39,8 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Collectors;
 
 
@@ -51,6 +55,9 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart> implements
 
     @Resource
     private ChartMapper chartMapper;
+
+    @Resource
+    private ThreadPoolExecutor threadPoolExecutor;
 
     @Resource
     private WmsensitiveService wmsensitiveService;
@@ -133,28 +140,30 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart> implements
         String name = genChartByAiRequest.getName();
         String goal = genChartByAiRequest.getGoal();
         String chartType = genChartByAiRequest.getChartType();
-
-        String[] splits = result.split("【【【【【");
-        String genChart = splits[1].trim();
-        String genChartNew = DataCleaningUtils.extractJsonPart(genChart);
-        String genResult = splits[2].trim();
-
         // 插入到数据库
         Chart chart = new Chart();
         chart.setName(name);
         chart.setGoal(goal);
         chart.setChartData(userInputs.get("csvData"));
         chart.setChartType(chartType);
-        chart.setGenChart(genChartNew);
-        chart.setGenResult(genResult);
         chart.setStatus("succeed");
         String join = String.join(",", ExcelUtils.getHeaderList());
         chart.setMeterHeader(join);
+        String genChartNew = "";
+        String genResult = "";
+        if (StringUtils.isNotBlank(result)){
+            String[] splits = result.split("【【【【【");
+            String genChart = splits[1].trim();
+            genChartNew = DataCleaningUtils.extractJsonPart(genChart);
+            genResult = splits[2].trim();
+            chart.setGenChart(genChartNew);
+            chart.setGenResult(genResult);
+        }
         chart.setUserId(userService.getLoginUser(request).getId());
         boolean saveResult = this.save(chart);
         ThrowUtils.throwIf(!saveResult, ErrorCode.SYSTEM_ERROR, "图表保存失败");
         BiResponse biResponse = new BiResponse();
-        biResponse.setGenChart(genChart);
+        biResponse.setGenChart(genChartNew);
         biResponse.setGenResult(genResult);
         biResponse.setChartId(chart.getId());
         return biResponse;
@@ -271,6 +280,74 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart> implements
         ThrowUtils.throwIf(ObjectUtils.isEmpty(chartOriginal), ErrorCode.NOT_FOUND_ERROR, "数据错误查找内容为空");
         
         return new ChartOriginalVO(chartOriginal, chartOriginal.size(), meterHeader);
+    }
+
+    @Override
+    public BiResponse genChartByAiAsync(MultipartFile multipartFile, GenChartByAiRequest genChartByAiRequest, HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        HashMap<String, String> userInputs = this.getUserInput(multipartFile, genChartByAiRequest);
+        // 插入到数据库
+        Chart chart = new Chart();
+        chart.setName(genChartByAiRequest.getName());
+        chart.setGoal(genChartByAiRequest.getGoal());
+        chart.setChartData(userInputs.get("csvData"));
+        chart.setChartType(genChartByAiRequest.getChartType());
+        chart.setStatus("wait");
+        chart.setUserId(loginUser.getId());
+        boolean saveResult = this.save(chart);
+        ThrowUtils.throwIf(!saveResult, ErrorCode.SYSTEM_ERROR, "图表保存失败");
+
+        // todo 建议处理任务队列满了后，抛异常的情况
+        CompletableFuture.runAsync(() -> {
+            // 先修改图表任务状态为 “执行中”。等执行成功后，修改为 “已完成”、保存执行结果；执行失败后，状态修改为 “失败”，记录任务失败信息。
+            Chart updateChart = new Chart();
+            updateChart.setId(chart.getId());
+            updateChart.setStatus("running");
+            boolean b = this.updateById(updateChart);
+            if (!b) {
+                handleChartUpdateError(chart.getId(), "更新图表执行中状态失败");
+                return;
+            }
+            // 调用 AI
+            String result = getAiGenerateChart(userInputs.get("userInput"));
+
+            Chart updateChartResult = new Chart();
+            String genResult = "",genChartNew = "";
+            if (StringUtils.isNotBlank(result)){
+                String[] splits = result.split("【【【【【");
+                String genChart = splits[1].trim();
+                genChartNew = DataCleaningUtils.extractJsonPart(genChart);
+                genResult = splits[2].trim();
+                chart.setGenChart(genChartNew);
+                chart.setGenResult(genResult);
+            }
+            updateChartResult.setId(chart.getId());
+            updateChartResult.setGenChart(genChartNew);
+            updateChartResult.setGenResult(genResult);
+            // todo 建议定义状态为枚举值
+            updateChartResult.setStatus("succeed");
+            boolean updateResult = this.updateById(updateChartResult);
+            if (!updateResult) {
+                handleChartUpdateError(chart.getId(), "更新图表成功状态失败");
+            }
+        }, threadPoolExecutor);
+
+        BiResponse biResponse = new BiResponse();
+        biResponse.setChartId(chart.getId());
+        
+        return biResponse;
+    }
+
+    @Override
+    public void handleChartUpdateError(long chartId, String execMessage) {
+        Chart updateChartResult = new Chart();
+        updateChartResult.setId(chartId);
+        updateChartResult.setStatus("failed");
+        updateChartResult.setExecMessage("execMessage");
+        boolean updateResult = this.updateById(updateChartResult);
+        if (!updateResult) {
+            log.error("更新图表失败状态失败" + chartId + "," + execMessage);
+        }
     }
 
 }

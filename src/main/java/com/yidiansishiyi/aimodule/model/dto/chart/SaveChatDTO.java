@@ -3,6 +3,7 @@ package com.yidiansishiyi.aimodule.model.dto.chart;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
@@ -27,4 +28,10 @@ public class SaveChatDTO {
      * 用户请求
      */
     HttpServletRequest request;
+
+    public SaveChatDTO(GenChartByAiRequest genChartByAiRequest, HashMap<String, String> userInputs, HttpServletRequest request) {
+        this.genChartByAiRequest = genChartByAiRequest;
+        this.userInputs = userInputs;
+        this.request = request;
+    }
 }

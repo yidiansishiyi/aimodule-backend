@@ -9,6 +9,7 @@ import com.yidiansishiyi.aimodule.model.vo.BiResponse;
 import com.yidiansishiyi.aimodule.model.vo.ChartOriginalVO;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 
 /**
@@ -39,4 +40,8 @@ public interface ChartService extends IService<Chart> {
     Boolean createChart(CreateChartExcelDTO createChartExcelDTO);
 
     ChartOriginalVO getOriginalChartById(String id);
+
+    BiResponse genChartByAiAsync(MultipartFile multipartFile, GenChartByAiRequest genChartByAiRequest, HttpServletRequest request);
+
+    void handleChartUpdateError(long chartId, String execMessage);
 }
