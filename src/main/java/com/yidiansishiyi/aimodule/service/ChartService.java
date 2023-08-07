@@ -26,7 +26,6 @@ public interface ChartService extends IService<Chart> {
      * @return 是否合法
      */
     Boolean verifyDocument(MultipartFile multipartFile, GenChartByAiRequest genChartByAiRequest);
-
     /**
      * 获取用户输入
      *
