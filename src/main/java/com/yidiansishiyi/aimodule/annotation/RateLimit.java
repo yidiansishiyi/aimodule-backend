@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RateLimit {
 
-    long value() default 5; // 限流阈值，表示允许通过的请求数量
+    long value() default 2; // 限流阈值，表示允许通过的请求数量
 
     long duration() default 1; // 限流时间窗口，单位为毫秒
 

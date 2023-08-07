@@ -16,9 +16,8 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-
-@Component
 @Slf4j
+@Component
 public class BiMessageConsumer {
 
     @Resource

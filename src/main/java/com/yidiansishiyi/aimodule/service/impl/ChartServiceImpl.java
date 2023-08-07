@@ -7,13 +7,16 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.support.ExcelTypeEnum;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.yidiansishiyi.aimodule.bizmq.BiMessageProducer;
 import com.yidiansishiyi.aimodule.common.ErrorCode;
 import com.yidiansishiyi.aimodule.exception.BusinessException;
 import com.yidiansishiyi.aimodule.exception.ThrowUtils;
 import com.yidiansishiyi.aimodule.manager.AiManager;
 import com.yidiansishiyi.aimodule.mapper.ChartMapper;
+import com.yidiansishiyi.aimodule.model.dto.chart.ChartQueryRequest;
 import com.yidiansishiyi.aimodule.model.dto.chart.CreateChartExcelDTO;
 import com.yidiansishiyi.aimodule.model.dto.chart.GenChartByAiRequest;
 import com.yidiansishiyi.aimodule.model.dto.chart.SaveChatDTO;
@@ -28,9 +31,11 @@ import com.yidiansishiyi.aimodule.utils.DataCleaningUtils;
 import com.yidiansishiyi.aimodule.utils.ExcelUtils;
 import com.yidiansishiyi.aimodule.constant.CommonConstant;
 import com.yidiansishiyi.aimodule.utils.RetryUtils;
+import com.yidiansishiyi.aimodule.utils.SqlUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.jdbc.SQL;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -55,6 +60,9 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart> implements
 
     @Resource
     private ChartMapper chartMapper;
+
+    @Resource
+    private BiMessageProducer biMessageProducer;
 
     @Resource
     private ThreadPoolExecutor threadPoolExecutor;
@@ -348,6 +356,60 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart> implements
         if (!updateResult) {
             log.error("更新图表失败状态失败" + chartId + "," + execMessage);
         }
+    }
+
+    @Override
+    public BiResponse genChartByAiAsyncMq(MultipartFile multipartFile, GenChartByAiRequest genChartByAiRequest, HttpServletRequest request) {
+
+        String name = genChartByAiRequest.getName();
+        String goal = genChartByAiRequest.getGoal();
+        String chartType = genChartByAiRequest.getChartType();
+
+        // 构造用户输入
+        HashMap<String, String> userInputs = this.getUserInput(multipartFile, genChartByAiRequest);
+
+        User loginUser = userService.getLoginUser(request);
+        String csvData = userInputs.get("csvData");
+        // 插入到数据库
+        Chart chart = new Chart();
+        chart.setName(name);
+        chart.setGoal(goal);
+        chart.setChartData(csvData);
+        chart.setChartType(chartType);
+        chart.setStatus("wait");
+        chart.setUserId(loginUser.getId());
+        boolean saveResult = this.save(chart);
+        ThrowUtils.throwIf(!saveResult, ErrorCode.SYSTEM_ERROR, "图表保存失败");
+        long newChartId = chart.getId();
+        biMessageProducer.sendMessage(String.valueOf(newChartId));
+        BiResponse biResponse = new BiResponse();
+        biResponse.setChartId(newChartId);
+        return biResponse;
+    }
+
+    @Override
+    public QueryWrapper<Chart> getQueryWrapper(ChartQueryRequest chartQueryRequest) {
+        QueryWrapper<Chart> queryWrapper = new QueryWrapper<>();
+        if (chartQueryRequest == null) {
+            return queryWrapper;
+        }
+        Long id = chartQueryRequest.getId();
+        String name = chartQueryRequest.getName();
+        String goal = chartQueryRequest.getGoal();
+        String chartType = chartQueryRequest.getChartType();
+        Long userId = chartQueryRequest.getUserId();
+        String sortField = chartQueryRequest.getSortField();
+        String sortOrder = chartQueryRequest.getSortOrder();
+
+        queryWrapper.eq(id != null && id > 0, "id", id);
+        queryWrapper.like(StringUtils.isNotBlank(name), "name", name);
+        queryWrapper.eq(StringUtils.isNotBlank(goal), "goal", goal);
+        queryWrapper.eq(StringUtils.isNotBlank(chartType), "chartType", chartType);
+        queryWrapper.eq(ObjectUtils.isNotEmpty(userId), "userId", userId);
+        queryWrapper.eq("isDelete", false);
+        queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
+                sortField);
+        return queryWrapper;
     }
 
 }

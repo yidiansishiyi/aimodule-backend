@@ -34,8 +34,13 @@ spring:
     database: 1
     host: 124.222.184.3
     port: 6379
-    timeout: 5000
     password: Yidiansishiyi0214
+  thread:
+    pool:
+      core-pool-size: 2
+      maximum-pool-size: 4
+      capacity: 4
+      keep-alive-time: 100
   # Elasticsearch 配置
   # todo 需替换配置，然后取消注释
   #  elasticsearch:

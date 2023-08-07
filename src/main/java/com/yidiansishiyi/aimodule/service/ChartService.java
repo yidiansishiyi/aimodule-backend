@@ -1,6 +1,8 @@
 package com.yidiansishiyi.aimodule.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.yidiansishiyi.aimodule.model.dto.chart.ChartQueryRequest;
 import com.yidiansishiyi.aimodule.model.dto.chart.CreateChartExcelDTO;
 import com.yidiansishiyi.aimodule.model.dto.chart.GenChartByAiRequest;
 import com.yidiansishiyi.aimodule.model.dto.chart.SaveChatDTO;
@@ -44,4 +46,8 @@ public interface ChartService extends IService<Chart> {
     BiResponse genChartByAiAsync(MultipartFile multipartFile, GenChartByAiRequest genChartByAiRequest, HttpServletRequest request);
 
     void handleChartUpdateError(long chartId, String execMessage);
+
+    BiResponse genChartByAiAsyncMq(MultipartFile multipartFile, GenChartByAiRequest genChartByAiRequest, HttpServletRequest request);
+
+    QueryWrapper<Chart> getQueryWrapper(ChartQueryRequest chartQueryRequest);
 }
