@@ -19,7 +19,7 @@ spring:
   # todo 需替换配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://124.222.184.3:3306/yidiansishiyi
+    url: jdbc:mysql://x/yidiansishiyi
     username: yidiansishiyi
     password: zyeE75mZjmxm7XGT
     # Redis 配置
@@ -27,12 +27,12 @@ spring:
   redis:
     database: 2
     port: 6379
-    host: 124.222.184.3
+    host: x
     timeout: 5000
     password: Yidiansishiyi0214
   redisson:
     database: 1
-    host: 124.222.184.3
+    host: x
     port: 6379
     password: Yidiansishiyi0214
   thread:
@@ -107,6 +107,6 @@ cos:
 # 鱼聪明 AI 配置（https://yucongming.com/）
 yuapi:
   client:
-    access-key: z9uv10ti27a3me53ui7q42tdzt0q05ze
-    secret-key: 8udguinu4xs5aql8cn7uhww8p69ngxok
+    access-key: x
+    secret-key: x
 
