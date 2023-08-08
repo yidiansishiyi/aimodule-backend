@@ -54,6 +54,13 @@
 微服务的优点在于业务隔离,集群布置负载均衡只要保证数据一致性和可用性就可以保证用户的体验
     
 
+## 正在进行的任务
+#### 引入其他 ai 来源 目前进展,该ai 模型 有 ak sk 提供,没有现成的 sdk 可用,尝试编写,遇见些困难,需要整理网络方向有关的知识,和沟通确认调用方法
+apiId: nBoA5U7hJtQzqNMwLfLJTi
+https://kaokaofs.feishu.cn/docx/Mq8Hdh1YqoZorEx2cgqcnGOPnof 最新官方文档
+![img.png](../../../img/img6.png)
+![img.png](../../../img/img5.png)
+
 ## 架构图
 
 ![img.png](img/img.png)
