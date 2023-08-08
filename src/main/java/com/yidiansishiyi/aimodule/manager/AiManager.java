@@ -3,6 +3,9 @@ package com.yidiansishiyi.aimodule.manager;
 import com.github.rholder.retry.*;
 import com.yidiansishiyi.aimodule.common.ErrorCode;
 import com.yidiansishiyi.aimodule.exception.BusinessException;
+import com.yidiansishiyi.zelinaiclientsdk.client.ZelinaiClient;
+import com.yidiansishiyi.zelinaiclientsdk.model.ZelinAIRequest;
+import com.yidiansishiyi.zelinaiclientsdk.model.ZelinAIResponse;
 import com.yupi.yucongming.dev.client.YuCongMingClient;
 import com.yupi.yucongming.dev.common.BaseResponse;
 import com.yupi.yucongming.dev.model.DevChatRequest;
@@ -24,6 +27,9 @@ public class AiManager {
 
     @Resource
     private YuCongMingClient yuCongMingClient;
+
+    @Resource
+    private ZelinaiClient zelinaiClient;
 
     /**
      * AI 对话
@@ -51,13 +57,28 @@ public class AiManager {
         return response.getData().getContent();
     }
 
+    public String doChat(ZelinAIRequest zelinAIRequest) {
+        com.yidiansishiyi.zelinaiclientsdk.common.BaseResponse<ZelinAIResponse> response = null;
+        try {
+            response = zelinaiClient.doChat(zelinAIRequest);
+            if (response == null) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "AI 响应错误");
+            }
+        } catch (Exception e) {
+            log.error("Error generating{}", e.getMessage());
+            throw new RuntimeException(e);
+        }
+
+        return response.getData().getAiContent();
+    }
+
     /**
      * 重试调用AI对话接口
      *
      * @param
      * @return
      */
-    public BaseResponse<DevChatResponse>  retryDoChat(DevChatRequest devChatRequest) {
+    public BaseResponse<DevChatResponse> retryDoChat(DevChatRequest devChatRequest) {
         Retryer<BaseResponse<DevChatResponse>> retryer = RetryerBuilder.<BaseResponse<DevChatResponse>>newBuilder()
                 .retryIfResult(result -> result == null || result.getData().getContent().isEmpty()) // 在返回结果为null或空字符串时进行重试
                 .withStopStrategy(StopStrategies.stopAfterAttempt(3)) // 设置最大重试次数为3次
