@@ -17,18 +17,13 @@ public class CreateChartExcelDTO {
      */
     private MultipartFile multipartFile;
 
-    /**
-     * 请求
-     */
-    private HttpServletRequest request;
 
     /**
      * 图表ID
      */
     private Long chartId;
 
-    public CreateChartExcelDTO(MultipartFile multipartFile, HttpServletRequest request) {
+    public CreateChartExcelDTO(MultipartFile multipartFile) {
         this.multipartFile = multipartFile;
-        this.request = request;
     }
 }

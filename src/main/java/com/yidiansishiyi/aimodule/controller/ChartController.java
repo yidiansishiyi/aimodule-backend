@@ -62,7 +62,7 @@ public class ChartController {
     @PostMapping("/zero")
     public Boolean zero(@RequestPart("file") MultipartFile multipartFile,
                         GenChartByAiRequest genChartByAiRequest, HttpServletRequest request) {
-        CreateChartExcelDTO createChartExcelDTO = new CreateChartExcelDTO(multipartFile, request);
+        CreateChartExcelDTO createChartExcelDTO = new CreateChartExcelDTO(multipartFile);
         return chartService.createChart(createChartExcelDTO);
     }
 
@@ -256,7 +256,34 @@ public class ChartController {
         String result = chartService.getAiGenerateChart(userInputs.get("userInput"));
         SaveChatDTO saveChatDTO = new SaveChatDTO(genChartByAiRequest, result, userInputs, request);
         BiResponse biResponse = chartService.saveChart(saveChatDTO);
-        CreateChartExcelDTO createChartExcelDTO = new CreateChartExcelDTO(multipartFile, request, biResponse.getChartId());
+        CreateChartExcelDTO createChartExcelDTO = new CreateChartExcelDTO(multipartFile, biResponse.getChartId());
+        chartService.createChart(createChartExcelDTO);
+        return ResultUtils.success(biResponse);
+    }
+
+    /**
+     * 智能分析（同步）
+     *
+     * @param multipartFile
+     * @param genChartByAiRequest
+     * @param request
+     * @return
+     */
+//    @RateLimit(key = "genChartByAi")
+    @PostMapping("/genChartByZelinAi")
+    public BaseResponse<BiResponse> genChartByZelinAi(@RequestPart("file") MultipartFile multipartFile,
+                                                 GenChartByAiRequest genChartByAiRequest, HttpServletRequest request) {
+
+        ThrowUtils.throwIf(!chartService.verifyDocument(multipartFile, genChartByAiRequest),
+                ErrorCode.PARAMS_ERROR, "存在敏感字");
+
+        // 构造用户输入
+        HashMap<String, String> userInputs = chartService.getUserInput(multipartFile, genChartByAiRequest);
+
+        String result = chartService.genChartByZelinAi(userInputs.get("userInput"));
+        SaveChatDTO saveChatDTO = new SaveChatDTO(genChartByAiRequest, result, userInputs, request);
+        BiResponse biResponse = chartService.saveChart(saveChatDTO);
+        CreateChartExcelDTO createChartExcelDTO = new CreateChartExcelDTO(multipartFile, biResponse.getChartId());
         chartService.createChart(createChartExcelDTO);
         return ResultUtils.success(biResponse);
     }

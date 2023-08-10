@@ -36,6 +36,8 @@ public interface ChartService extends IService<Chart> {
 
     String getAiGenerateChart(String userInput);
 
+    String genChartByZelinAi(String userInput);
+
     BiResponse saveChart(SaveChatDTO saveChatDTO);
 
     Boolean createChart(CreateChartExcelDTO createChartExcelDTO);
