@@ -8,4 +8,5 @@ import java.util.Map;
 
 public interface ChartRawDataService {
     List<Map<String, Object>> getOriginalChartById(ChartRawDataQueryRequest chartRawDataQueryRequest, HttpServletRequest request);
+
 }

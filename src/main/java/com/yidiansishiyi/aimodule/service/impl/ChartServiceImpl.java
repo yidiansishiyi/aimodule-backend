@@ -30,13 +30,11 @@ import com.yidiansishiyi.aimodule.service.WmsensitiveService;
 import com.yidiansishiyi.aimodule.utils.DataCleaningUtils;
 import com.yidiansishiyi.aimodule.utils.ExcelUtils;
 import com.yidiansishiyi.aimodule.constant.CommonConstant;
-import com.yidiansishiyi.aimodule.utils.RetryUtils;
 import com.yidiansishiyi.aimodule.utils.SqlUtils;
 import com.yidiansishiyi.zelinaiclientsdk.model.ZelinAIRequest;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.jdbc.SQL;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -143,28 +141,30 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart> implements
     @Override
     public String genChartByZelinAi(String userInput) {
         long biModelId = CommonConstant.BI_MODEL_ID;
-        // zelinai 接口限制 \n 为铭感字
-        StringBuffer buffer = new StringBuffer(userInput);
-        String userInputZelinAi = "";
-        for (int i = 0; i < buffer.length(); i++) {
-            if (i == buffer.length()-2){
-                break;
-            }
-            char c = buffer.charAt(i);
-            char z = buffer.charAt(i + 1);
-            if (c == '\n') {
-                userInputZelinAi += ' ';
-            }else {
-                userInputZelinAi += c;
-            }
-        }
 
+        String userInputNew = userInput.replaceAll("\\n", " ");
+//        // zelinai 接口限制 \n 为铭感字
+//        StringBuffer buffer = new StringBuffer(userInput);
+//        String userInputZelinAi = "";
+//        for (int i = 0; i < buffer.length(); i++) {
+//            if (i == buffer.length()-2){
+//                break;
+//            }
+//            char c = buffer.charAt(i);
+//            char z = buffer.charAt(i + 1);
+//            if (c == '\n') {
+//                userInputZelinAi += ' ';
+//            }else {
+//                userInputZelinAi += c;
+//            }
+//        }
+//        userInput.replace("\\n"," ");
         // ai 调用 及数据清洗
         ZelinAIRequest zelinAIRequest = new ZelinAIRequest();
         zelinAIRequest.setApp_id("nBoA5U7hJtQzqNMwLfLJTi");
         zelinAIRequest.setRequest_id("124224");
         zelinAIRequest.setUid("152525");
-        zelinAIRequest.setContent(userInputZelinAi);
+        zelinAIRequest.setContent(userInputNew);
 
         String result = aiManager.doChat(zelinAIRequest);
         String[] splits = result.split("【【【【【");
