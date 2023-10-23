@@ -7,6 +7,10 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -15,8 +19,10 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 
-@Component
+//@Component
 @Slf4j
+@RestController
+@RequestMapping("/chartScheduled")
 public class InsertChat {
     @Resource
     private ChartService chartService;
@@ -28,6 +34,7 @@ public class InsertChat {
     @Value("${scheduled.testChartDataInsert:false}")
     private Boolean testChartDataInsert;
 
+    @GetMapping("/insertChat")
     @Scheduled(fixedRate = 30 * 1000) // 三十秒一次百万数据
     public void chatrun() {
         if ( testChartDataInsert ){

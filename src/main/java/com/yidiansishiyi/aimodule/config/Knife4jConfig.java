@@ -31,7 +31,8 @@ public class Knife4jConfig {
                         .build())
                 .select()
                 // 指定 Controller 扫描包路径
-                .apis(RequestHandlerSelectors.basePackage("com.yidiansishiyi.aimodule.controller"))
+//                .apis(RequestHandlerSelectors.basePackage("com.yidiansishiyi.aimodule.controller"))
+                .apis(RequestHandlerSelectors.basePackage("com.yidiansishiyi.aimodule"))
                 .paths(PathSelectors.any())
                 .build();
     }

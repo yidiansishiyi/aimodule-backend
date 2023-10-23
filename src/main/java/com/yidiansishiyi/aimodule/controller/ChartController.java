@@ -99,59 +99,6 @@ public class ChartController {
     @Resource
     private ThreadPoolExecutor threadPoolExecutor;
 
-    @PostMapping("/insertChat")
-    public boolean insertChat() throws IOException {
-        List<List<Chart>> futures = new ArrayList<>();
-        StopWatch totalDuration = new StopWatch();
-        StopWatch buildInputDuration = new StopWatch();
-        totalDuration.start();
-
-        ArrayList<CompletableFuture<Void>> completableFutures = new ArrayList<>();
-        buildInputDuration.start();
-        for (int i = 0; i < 20; i++) {
-            List<Chart> charts = new LinkedList<>();
-            for (int j = 0; j < 50000; j++) {
-                Chart chart = Chart.builder()
-                        .goal("分析店铺内商品" + j)
-                        .name("商品分析" + j)
-                        .chartType("折线图")
-                        .status("succeed")
-                        .userId(1652457118348935170L)
-                        .build();
-                charts.add(chart);
-            }
-            log.info("构建数据时长: " + buildInputDuration.getTime());
-            buildInputDuration.suspend();
-            buildInputDuration.resume();
-            CompletableFuture<Void> voidCompletableFuture = CompletableFuture.runAsync(() -> {
-                try {
-                    System.out.println("threadName: " + Thread.currentThread().getName());
-                    StopWatch singleBatchInsertionTime = new StopWatch();
-                    singleBatchInsertionTime.start();
-                    chartService.saveBatch(charts, 500);
-                    singleBatchInsertionTime.stop();
-                    log.info("单批次插入时长: " + singleBatchInsertionTime.getTime());
-                } catch (Exception e) {
-                    // 处理异常，可以记录到日志文件中
-                    log.error("插入数据发生异常: " + e.getMessage());
-                }
-            }, threadPoolExecutor);
-           completableFutures.add(voidCompletableFuture);
-        }
-
-        try {
-            CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[]{})).join();
-        } finally {
-            // 关闭线程池
-            threadPoolExecutor.shutdown();
-        }
-
-        totalDuration.stop();
-        log.info("插入 数据总时长: " + totalDuration.getTime());
-        return true;
-    }
-
-
     // region 增删改查
     @Profile({"dev", "local"})
     @PostMapping("/zero")
@@ -166,7 +113,6 @@ public class ChartController {
         ChartOriginalVO originalChartById = chartService.getOriginalChartById(id);
         return originalChartById;
     }
-
 
     /**
      * 创建
