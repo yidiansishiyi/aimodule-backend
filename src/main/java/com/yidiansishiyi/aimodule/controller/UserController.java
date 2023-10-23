@@ -1,5 +1,9 @@
 package com.yidiansishiyi.aimodule.controller;
 
+import cn.hutool.core.util.RandomUtil;
+import cn.hutool.crypto.digest.DigestUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yidiansishiyi.aimodule.annotation.AuthCheck;
 import com.yidiansishiyi.aimodule.common.BaseResponse;
@@ -12,17 +16,27 @@ import com.yidiansishiyi.aimodule.exception.BusinessException;
 import com.yidiansishiyi.aimodule.exception.ThrowUtils;
 import com.yidiansishiyi.aimodule.model.dto.user.*;
 import com.yidiansishiyi.aimodule.model.entity.User;
+import com.yidiansishiyi.aimodule.model.enums.UserRoleEnum;
 import com.yidiansishiyi.aimodule.model.vo.LoginUserVO;
 import com.yidiansishiyi.aimodule.model.vo.UserVO;
 import com.yidiansishiyi.aimodule.service.UserService;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Handler;
 
 /**
  * 用户接口
@@ -40,7 +54,34 @@ public class UserController {
     @Resource
     private WxOpenConfig wxOpenConfig;
 
-    // region 登录相关
+    private static final String SALT = "yidiansishiyi";
+
+    @GetMapping("/dataSynchronization")
+    public void dataSynchronization() {
+        QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
+        userQueryWrapper.select("id").isNull("accessKey");
+
+        List<User> list = userService.list(userQueryWrapper);
+
+        if (list.isEmpty()) return;
+
+        List<User> userListUsers = new ArrayList<>();
+        list.forEach(user -> {
+            User updateUser = new User();
+            Long userId = user.getId();
+            String accessKey = DigestUtil.md5Hex(SALT  + userId + RandomUtil.randomNumbers(5));
+            String secretKey = DigestUtil.md5Hex(SALT + userId + RandomUtil.randomNumbers(8));
+
+            updateUser.setAccessKey(accessKey);
+
+            updateUser.setSecretKey(secretKey);
+            updateUser.setId(userId);
+            userListUsers.add(updateUser);
+        });
+
+        userService.updateBatchById(userListUsers);
+
+    }
 
     /**
      * 用户注册
@@ -59,8 +100,20 @@ public class UserController {
         if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
             return null;
         }
+
         long result = userService.userRegister(userAccount, userPassword, checkPassword);
         return ResultUtils.success(result);
+    }
+
+    @PostMapping("/resetAccessKey")
+    public BaseResponse<Boolean> resetAccessKey(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
+
+        if (deleteRequest == null || deleteRequest.getId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+
+        Boolean resetAccessKey = userService.resetAccessKey(deleteRequest, request);
+        return ResultUtils.success(resetAccessKey);
     }
 
     /**

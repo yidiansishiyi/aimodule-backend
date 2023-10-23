@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yidiansishiyi.aimodule.mapper.InterfaceInfoMapper">
+
+<!--    <resultMap id="BaseResultMap" type="com.yupi.yuapicommon.model.entity.InterfaceInfo">-->
+<!--            <id property="id" column="id" jdbcType="BIGINT"/>-->
+<!--            <result property="name" column="name" jdbcType="VARCHAR"/>-->
+<!--            <result property="description" column="description" jdbcType="VARCHAR"/>-->
+<!--            <result property="url" column="url" jdbcType="VARCHAR"/>-->
+<!--            <result property="requestParams" column="requestParams" jdbcType="VARCHAR"/>-->
+<!--            <result property="requestHeader" column="requestHeader" jdbcType="VARCHAR"/>-->
+<!--            <result property="responseHeader" column="responseHeader" jdbcType="VARCHAR"/>-->
+<!--            <result property="status" column="status" jdbcType="INTEGER"/>-->
+<!--            <result property="method" column="method" jdbcType="VARCHAR"/>-->
+<!--            <result property="userId" column="userId" jdbcType="BIGINT"/>-->
+<!--            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>-->
+<!--            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>-->
+<!--            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>-->
+<!--    </resultMap>-->
+
+    <sql id="Base_Column_List">
+        id,name,description,
+        url,requestParams,requestHeader,responseHeader,
+        status,method,userId,
+        createTime,updateTime,isDelete
+    </sql>
+
+    <insert id="addInterfaceTable" parameterType="long">
+        create table if not exists user_interface_info_${interfaceId}
+        (
+            id              bigint auto_increment comment '主键'
+                primary key,
+            userId          bigint                             not null comment '调用用户 id',
+            totalNum        int      default 0                 not null comment '总调用次数',
+            leftNum         int      default 0                 not null comment '剩余调用次数',
+            status          int      default 0                 not null comment '0-正常，1-禁用',
+            accessKey    varchar(512)                           not null comment 'accessKey',
+            secretKey    varchar(512)                           not null comment 'secretKey',
+            createTime      datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+            updateTime      datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+            isDelete        tinyint  default 0                 not null comment '是否删除(0-未删, 1-已删)'
+        )
+            comment '用户调用接口关系_${interfaceId}';
+    </insert>
+
+    <select id="getInterfaceTable" parameterType="long" resultType="string">
+        SHOW TABLES LIKE 'user_interface_info_${interfaceId}';
+    </select>
+
+    <select id="getUserInterfaceInfoTemplate" resultType="map">
+        SHOW CREATE TABLE user_interface_info_template
+    </select>
+
+    <insert id="addInterfaceTables" parameterType="string">
+        ${interfaceTables}
+    </insert>
+
+</mapper>

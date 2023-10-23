@@ -2,6 +2,7 @@ package com.yidiansishiyi.aimodule.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.yidiansishiyi.aimodule.common.DeleteRequest;
 import com.yidiansishiyi.aimodule.model.dto.user.UserQueryRequest;
 import com.yidiansishiyi.aimodule.model.entity.User;
 import com.yidiansishiyi.aimodule.model.vo.LoginUserVO;
@@ -9,6 +10,7 @@ import com.yidiansishiyi.aimodule.model.vo.UserVO;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 用户服务
@@ -44,6 +46,15 @@ public interface UserService extends IService<User> {
      * @return
      */
     User getLoginUser(HttpServletRequest request);
+
+    /**
+     * 重置 accessKey
+     *
+     * @param deleteRequest
+     * @param request
+     * @return
+     */
+    Boolean resetAccessKey(DeleteRequest deleteRequest, HttpServletRequest request);
 
     /**
      * 获取当前登录用户（允许未登录）

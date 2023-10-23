@@ -10,6 +10,7 @@ import com.yidiansishiyi.aimodule.common.ResultUtils;
 import com.yidiansishiyi.aimodule.constant.UserConstant;
 import com.yidiansishiyi.aimodule.exception.BusinessException;
 import com.yidiansishiyi.aimodule.exception.ThrowUtils;
+import com.yidiansishiyi.aimodule.mapper.ChartMapper;
 import com.yidiansishiyi.aimodule.model.dto.chart.*;
 import com.yidiansishiyi.aimodule.model.entity.Chart;
 import com.yidiansishiyi.aimodule.model.entity.User;
@@ -18,9 +19,15 @@ import com.yidiansishiyi.aimodule.model.vo.ChartOriginalVO;
 import com.yidiansishiyi.aimodule.service.ChartService;
 import com.yidiansishiyi.aimodule.service.UserService;
 import com.yidiansishiyi.aimodule.service.WmsensitiveService;
+import com.yidiansishiyi.aimodule.utils.ExcelUtils;
+import jodd.io.FileUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.time.StopWatch;
+import org.redisson.api.RMap;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Profile;
+
 
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,7 +35,15 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
-import java.util.HashMap;
+import java.io.File;
+import java.io.IOException;
+
+import java.time.LocalDate;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 
 /**
@@ -50,10 +65,90 @@ public class ChartController {
     @Resource
     private WmsensitiveService wmsensitiveService;
 
+    @Resource
+    private RedissonClient redissonClient;
+
+
+    private Date initialTime = new Date();
+
     @Profile({"dev", "local"})
     @PostMapping("/ceses")
     public boolean ceses(String ceses) {
         return wmsensitiveService.checkSensitiveWords(ceses);
+    }
+
+    @Profile({"dev", "local"})
+    @PostMapping("/initialTime")
+    public String initialTime() {
+        RMap<Object, Date> rMap = redissonClient.getMap("aimodule:job:operationTime");
+        rMap.put("startTime",initialTime);
+        rMap.put("endTime",initialTime);
+        return rMap.get("startTime").toString();
+    }
+
+    @Profile({"dev", "local"})
+    @PostMapping("/toCSV")
+    public boolean toCSV(@RequestPart("file") MultipartFile multipartFile) throws IOException {
+        String s = ExcelUtils.excelToCsv(multipartFile);
+        FileUtil.writeString(new File("D:\\files\\creatSql.txt"), s);
+        String s1 = FileUtil.readString(new File("D:\\files\\creatSql.txt"));
+        System.out.println(s1);
+        return true;
+    }
+
+    @Resource
+    private ThreadPoolExecutor threadPoolExecutor;
+
+    @PostMapping("/insertChat")
+    public boolean insertChat() throws IOException {
+        List<List<Chart>> futures = new ArrayList<>();
+        StopWatch totalDuration = new StopWatch();
+        StopWatch buildInputDuration = new StopWatch();
+        totalDuration.start();
+
+        ArrayList<CompletableFuture<Void>> completableFutures = new ArrayList<>();
+        buildInputDuration.start();
+        for (int i = 0; i < 20; i++) {
+            List<Chart> charts = new LinkedList<>();
+            for (int j = 0; j < 50000; j++) {
+                Chart chart = Chart.builder()
+                        .goal("分析店铺内商品" + j)
+                        .name("商品分析" + j)
+                        .chartType("折线图")
+                        .status("succeed")
+                        .userId(1652457118348935170L)
+                        .build();
+                charts.add(chart);
+            }
+            log.info("构建数据时长: " + buildInputDuration.getTime());
+            buildInputDuration.suspend();
+            buildInputDuration.resume();
+            CompletableFuture<Void> voidCompletableFuture = CompletableFuture.runAsync(() -> {
+                try {
+                    System.out.println("threadName: " + Thread.currentThread().getName());
+                    StopWatch singleBatchInsertionTime = new StopWatch();
+                    singleBatchInsertionTime.start();
+                    chartService.saveBatch(charts, 500);
+                    singleBatchInsertionTime.stop();
+                    log.info("单批次插入时长: " + singleBatchInsertionTime.getTime());
+                } catch (Exception e) {
+                    // 处理异常，可以记录到日志文件中
+                    log.error("插入数据发生异常: " + e.getMessage());
+                }
+            }, threadPoolExecutor);
+           completableFutures.add(voidCompletableFuture);
+        }
+
+        try {
+            CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[]{})).join();
+        } finally {
+            // 关闭线程池
+            threadPoolExecutor.shutdown();
+        }
+
+        totalDuration.stop();
+        log.info("插入 数据总时长: " + totalDuration.getTime());
+        return true;
     }
 
 
@@ -269,14 +364,13 @@ public class ChartController {
      * @param request
      * @return
      */
-//    @RateLimit(key = "genChartByAi")
+    @RateLimit(key = "genChartByAi")
     @PostMapping("/genChartByZelinAi")
     public BaseResponse<BiResponse> genChartByZelinAi(@RequestPart("file") MultipartFile multipartFile,
                                                  GenChartByAiRequest genChartByAiRequest, HttpServletRequest request) {
 
         ThrowUtils.throwIf(!chartService.verifyDocument(multipartFile, genChartByAiRequest),
                 ErrorCode.PARAMS_ERROR, "存在敏感字");
-
         // 构造用户输入
         HashMap<String, String> userInputs = chartService.getUserInput(multipartFile, genChartByAiRequest);
 

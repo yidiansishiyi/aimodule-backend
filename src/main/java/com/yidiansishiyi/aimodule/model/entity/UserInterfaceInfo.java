@@ -7,48 +7,42 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 用户
+ * 用户调用接口关系
  *
- * @TableName user
  */
-@TableName(value = "user")
+@TableName(value ="user_interface_info")
 @Data
-public class User implements Serializable {
+public class UserInterfaceInfo implements Serializable {
     /**
-     * id
+     * 主键
      */
-    @TableId(type = IdType.ASSIGN_ID)
+    @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
-     * 账号
+     * 调用用户 id
      */
-    private String userAccount;
+    private Long userId;
 
     /**
-     * 密码
+     * 接口 id
      */
-    private String userPassword;
+    private Long interfaceInfoId;
 
     /**
-     * 用户昵称
+     * 总调用次数
      */
-    private String userName;
+    private Integer totalNum;
 
     /**
-     * 用户头像
+     * 剩余调用次数
      */
-    private String userAvatar;
+    private Integer leftNum;
 
     /**
-     * 用户角色：user/admin
+     * 0-正常，1-禁用
      */
-    private String userRole;
-
-    /**
-     * 用户邮箱
-     */
-    private String userMailbox;
+    private Integer status;
 
 
     /**
@@ -73,7 +67,7 @@ public class User implements Serializable {
     private Date updateTime;
 
     /**
-     * 是否删除
+     * 是否删除(0-未删, 1-已删)
      */
     @TableLogic
     private Integer isDelete;

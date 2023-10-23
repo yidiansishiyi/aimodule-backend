@@ -1,17 +1,22 @@
 package com.yidiansishiyi.aimodule.service.impl;
 
+import cn.hutool.core.util.RandomUtil;
+import cn.hutool.crypto.digest.DigestUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.yidiansishiyi.aimodule.common.DeleteRequest;
 import com.yidiansishiyi.aimodule.common.ErrorCode;
+import com.yidiansishiyi.aimodule.constant.CommonConstant;
+import com.yidiansishiyi.aimodule.exception.BusinessException;
 import com.yidiansishiyi.aimodule.mapper.UserMapper;
 import com.yidiansishiyi.aimodule.model.dto.user.UserQueryRequest;
 import com.yidiansishiyi.aimodule.model.entity.User;
 import com.yidiansishiyi.aimodule.model.enums.UserRoleEnum;
 import com.yidiansishiyi.aimodule.model.vo.LoginUserVO;
 import com.yidiansishiyi.aimodule.model.vo.UserVO;
-import com.yidiansishiyi.aimodule.constant.CommonConstant;
-import com.yidiansishiyi.aimodule.exception.BusinessException;
 import com.yidiansishiyi.aimodule.service.UserService;
 import com.yidiansishiyi.aimodule.utils.SqlUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +25,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +47,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * 盐值，混淆密码
      */
     private static final String SALT = "yidiansishiyi";
+
+    @Resource
+    private UserMapper userMapper;
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
@@ -68,16 +77,54 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             }
             // 2. 加密
             String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
+
             // 3. 插入数据
             User user = new User();
             user.setUserAccount(userAccount);
             user.setUserPassword(encryptPassword);
+
+            Long userId = user.getId();
+
+            // 3. 分配 accessKey, secretKey
+            String accessKey = DigestUtil.md5Hex(SALT  + userId + RandomUtil.randomNumbers(5));
+            String secretKey = DigestUtil.md5Hex(SALT + userId + RandomUtil.randomNumbers(8));
+            user.setAccessKey(accessKey);
+            user.setSecretKey(secretKey);
+
             boolean saveResult = this.save(user);
             if (!saveResult) {
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，数据库错误");
             }
             return user.getId();
         }
+    }
+
+    @Override
+    public Boolean resetAccessKey(DeleteRequest deleteRequest, HttpServletRequest request) {
+        User loginUser = getLoginUser(request);
+        Long loginUserId = loginUser.getId();
+        String userRole = loginUser.getUserRole();
+        UserRoleEnum enumByValue = UserRoleEnum.getEnumByValue(userRole);
+
+        if (loginUserId.equals(deleteRequest.getId()) && !UserRoleEnum.ADMIN.equals(enumByValue)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+
+        QueryWrapper<User> userUpdateWrapper = new QueryWrapper<>();
+        userUpdateWrapper.eq("id", loginUserId);
+
+        User updateUser = getOne(userUpdateWrapper);
+        if (updateUser == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        Long userId = updateUser.getId();
+        String accessKey = DigestUtil.md5Hex(SALT  + userId + RandomUtil.randomNumbers(5));
+        String secretKey = DigestUtil.md5Hex(SALT + userId + RandomUtil.randomNumbers(8));
+        updateUser.setAccessKey(accessKey);
+        updateUser.setSecretKey(secretKey);
+
+        boolean flage = updateById(updateUser);
+        return flage;
     }
 
     @Override

@@ -187,7 +187,6 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart> implements
         Chart chart = new Chart();
         chart.setName(name);
         chart.setGoal(goal);
-        chart.setChartData(userInputs.get("csvData"));
         chart.setChartType(chartType);
         chart.setStatus("succeed");
         String join = String.join(",", ExcelUtils.getHeaderList());
@@ -333,7 +332,6 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart> implements
         Chart chart = new Chart();
         chart.setName(genChartByAiRequest.getName());
         chart.setGoal(genChartByAiRequest.getGoal());
-        chart.setChartData(userInputs.get("csvData"));
         chart.setChartType(genChartByAiRequest.getChartType());
         chart.setStatus("wait");
         chart.setUserId(loginUser.getId());
@@ -409,7 +407,6 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart> implements
         Chart chart = new Chart();
         chart.setName(name);
         chart.setGoal(goal);
-        chart.setChartData(csvData);
         chart.setChartType(chartType);
         chart.setStatus("wait");
         chart.setUserId(loginUser.getId());

@@ -1,0 +1,28 @@
+1. 计时器开始 start data
+2. 设定计时器 end data
+查找开始和结束之间的数据
+3. 换位置 start = end
+4. 开启下一循环数据
+
+
+
+			SELECT '大厅' AS processing_type, IFNULL(SUM(action), 0) AS accept_num
+            FROM zy_cx_node m
+            WHERE m.id ='tb_matter_chanel_result' AND accuracy_factor LIKE '001008002013%' AND (m.prescription_factor = 0 OR m.prescription_factor = 8)
+            UNION ALL
+            SELECT '网上' AS processing_type, IFNULL(SUM(action), 0) AS accept_num
+            FROM zy_cx_node m
+            WHERE m.id ='tb_matter_chanel_result' AND accuracy_factor LIKE '001008002013%' AND m.prescription_factor = 1
+            UNION ALL
+            SELECT '掌上' AS processing_type, IFNULL(SUM(action), 0) AS accept_num
+            FROM zy_cx_node m
+            WHERE m.id ='tb_matter_chanel_result' AND accuracy_factor LIKE '001008002013%' AND m.prescription_factor = 2
+            UNION ALL
+            SELECT '自动终端' AS processing_type, IFNULL(SUM(action), 0) AS accept_num
+            FROM zy_cx_node m
+            WHERE m.id ='tb_matter_chanel_result' AND accuracy_factor LIKE '001008002013%' AND m.prescription_factor = 11
+            UNION ALL
+            SELECT '其他' AS processing_type, IFNULL(SUM(action), 0) AS accept_num
+            FROM zy_cx_node m
+            LEFT JOIN zy_cx_apasinfo_dict b ON m.prescription_factor = b.m.id
+            WHERE m.m.id ='tb_matter_chanel_result' and  b.new_name IS NULL AND accuracy_factor LIKE '001008002013%';

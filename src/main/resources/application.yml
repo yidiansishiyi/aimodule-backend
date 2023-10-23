@@ -17,30 +17,76 @@ spring:
     store-type: redis
   # 数据库配置
   # todo 需替换配置
+#  datasource:
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    url: jdbc:mysql://124.222.184.3:3306/yidiansishiyi
+#    username: yidiansishiyi
+#    password: zyeE75mZjmxm7XGT
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://x/yidiansishiyi
-    username: yidiansishiyi
-    password: zyeE75mZjmxm7XGT
+    url: jdbc:mysql://localhost:3306/yidiansishiyi?rewriteBatchedStatements=true
+    username: root
+    password: root
+#    hikari:
+      ## 此属性控制从池返回的连接的默认自动提交行为,默认值：true
+#      auto-commit: true
+      ## 数据库连接超时时间,默认30秒，即30000
+#      connection-timeout: 20000
+      ## 最小空闲连接数量
+#      minimum-idle: 1
+      ## 连接池最大连接数，默认是10
+#      maximum-pool-size: 60
+      ## 此属性控制池中连接的最长生命周期，值0表示无限生命周期，默认1800000即30分钟
+#      max-lifetime: 1200000
+      ## 空闲连接存活最大时间，默认600000（10分钟）
+#      idle-timeout: 300000
+
+#  datasource:
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    url: jdbc:mysql://localhost:3306/cx_screen
+#    username: root
+#    password: root
+#  datasource:
+#    type: com.mchange.v2.c3p0.ComboPooledDataSource
+#    driverClass: com.mysql.cj.jdbc.Driver
+##    jdbcUrl: jdbc:mysql://124.222.184.3/yidiansishiyi
+##    user: yidiansishiyi
+##    password: zyeE75mZjmxm7XGT
+#    jdbcUrl: jdbc:mysql://124.222.184.3/cx_screen
+#    user: root
+#    password: root
+#    maxPoolSize: 521
+#    minPoolSize: 10
+#    initialPoolSize: 10
+#    acquireIncrement: 5
+#    idleConnectionTestPeriod: 28000
+#    maxIdleTime: 28000
     # Redis 配置
     # todo 需替换配置，然后取消注释
   redis:
     database: 2
     port: 6379
-    host: x
+    host: 124.222.184.3
     timeout: 5000
     password: Yidiansishiyi0214
   redisson:
     database: 1
-    host: x
+    host: 124.222.184.3
     port: 6379
     password: Yidiansishiyi0214
   thread:
     pool:
-      core-pool-size: 2
-      maximum-pool-size: 4
-      capacity: 4
-      keep-alive-time: 100
+      capacity: 40
+      maximum-pool-size: 80
+      keep-alive-time: 30
+      core-pool-size: 40
+#    thread:
+#    pool:
+#      core-pool-size: 2
+#      maximum-pool-size: 4
+#      capacity: 4
+#      keep-alive-time: 100
   # Elasticsearch 配置
   # todo 需替换配置，然后取消注释
   #  elasticsearch:
@@ -69,7 +115,7 @@ server:
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   global-config:
     db-config:
       logic-delete-field: isDelete # 全局逻辑删除的实体字段名
@@ -107,6 +153,14 @@ cos:
 # 鱼聪明 AI 配置（https://yucongming.com/）
 yuapi:
   client:
-    access-key: x
-    secret-key: x
-
+    access-key: z9uv10ti27a3me53ui7q42tdzt0q05ze
+    secret-key: 8udguinu4xs5aql8cn7uhww8p69ngxok
+zelinai:
+  client:
+    appkey: c9bac52057094ec08a0cd96af0d2b664
+    appsecret: dd4c5ee16c7f41888f3a633203f93e52
+scheduled:
+  cycle:
+    wmsensitive: true
+#scheduled:
+#  testChartDataInsert: true

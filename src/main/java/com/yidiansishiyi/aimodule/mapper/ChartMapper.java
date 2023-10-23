@@ -18,6 +18,10 @@ public interface ChartMapper extends BaseMapper<Chart> {
     Boolean insertChartData(String insertSql);
 
     List<Map> getOriginalChartById(String getOriginalChart);
+
+    void createrProcedure();
+
+    void getOriginalChartByID();
 }
 
 

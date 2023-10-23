@@ -1,7 +1,6 @@
 package com.yidiansishiyi.aimodule.config;
 
 import lombok.Data;
-import org.apache.poi.ss.formula.functions.T;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;

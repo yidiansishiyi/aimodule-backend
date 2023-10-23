@@ -29,10 +29,10 @@
     <select id="queryChartData" parameterType="string" resultType="map">
         ${querySql}
     </select>
+
     <select id="getOriginalChartById" resultType="java.util.Map">
         ${getOriginalChart}
     </select>
-
 
     <!--  Boolean createChartExelByID(String createSql);-->
     <update id="createChartExelByID">
@@ -41,5 +41,57 @@
 
     <insert id="insertChartData">
         ${insertChartData}
+    </insert>
+
+    <insert id="getOriginalChartByID">
+        DROP PROCEDURE IF EXISTS screen_qkzl_yjsycb;
+    </insert>
+
+    <insert id="createrProcedure">
+        CREATE PROCEDURE `screen_qkzl_yjsycb`()
+        BEGIN
+    -- 清空表格
+        TRUNCATE TABLE screen_qkzl_yjsycb;
+
+        -- 插入新数据
+        INSERT INTO screen_qkzl_yjsycb (work_month, one_thing_number, handling_items_number)
+        SELECT
+            a.months AS work_month,
+            a.counts AS one_thing_number,
+            COALESCE(b.accept_count, '0') AS handling_items_number
+        FROM (
+                 SELECT '1月' AS 'months', IFNULL(SUM(january_num), 0) AS 'counts' from ia_one_thing_joint_statistics
+                 UNION ALL
+                 SELECT '2月' AS 'months', IFNULL(SUM(february_num), 0) AS 'counts' from ia_one_thing_joint_statistics
+                 UNION ALL
+                 SELECT '3月' AS 'months', IFNULL(SUM(march_num), 0) AS 'counts' from ia_one_thing_joint_statistics
+                 UNION ALL
+                 SELECT '4月' AS 'months', IFNULL(SUM(april_num), 0) AS 'counts' from ia_one_thing_joint_statistics
+                 UNION ALL
+                 SELECT '5月' AS 'months', IFNULL(SUM(may_num), 0) AS 'counts' from ia_one_thing_joint_statistics
+                 UNION ALL
+                 SELECT '6月' AS 'months', IFNULL(SUM(june_num), 0) AS 'counts' from ia_one_thing_joint_statistics
+                 UNION ALL
+                 SELECT '7月' AS 'months', IFNULL(SUM(july_num), 0) AS 'counts' from ia_one_thing_joint_statistics
+                 UNION ALL
+                 SELECT '8月' AS 'months', IFNULL(SUM(august_num), 0) AS 'counts' from ia_one_thing_joint_statistics
+                 UNION ALL
+                 SELECT '9月' AS 'months', IFNULL(SUM(september_num), 0) AS 'counts' from ia_one_thing_joint_statistics
+                 UNION ALL
+                 SELECT '10月' AS 'months', IFNULL(SUM(october_num), 0) AS 'counts' from ia_one_thing_joint_statistics
+                 UNION ALL
+                 SELECT '11月' AS 'months', IFNULL(SUM(november_num), 0) AS 'counts' from ia_one_thing_joint_statistics
+                 UNION ALL
+                 SELECT '12月' AS 'months', IFNULL(SUM(december_num), 0) AS 'counts' from ia_one_thing_joint_statistics
+             ) a
+                 LEFT JOIN (
+            SELECT
+                CONCAT(MONTH(STR_TO_DATE(i_date, '%Y-%m-%d')), '月') as 'months',
+                    SUM(accept_count) as accept_count
+            FROM data_gov_item_hande t1
+            WHERE type = 0 AND YEAR(STR_TO_DATE(i_date, '%Y-%m-%d')) = YEAR(CURDATE())
+        GROUP BY MONTH(STR_TO_DATE(i_date, '%Y-%m-%d'))
+            ) b ON a.months = b.months;
+        END
     </insert>
 </mapper>

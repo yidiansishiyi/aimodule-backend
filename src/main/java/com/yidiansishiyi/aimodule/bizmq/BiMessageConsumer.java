@@ -85,8 +85,6 @@ public class BiMessageConsumer {
     private String buildUserInput(Chart chart) {
         String goal = chart.getGoal();
         String chartType = chart.getChartType();
-        String csvData = chart.getChartData();
-
         // 构造用户输入
         StringBuilder userInput = new StringBuilder();
         userInput.append("分析需求：").append("\n");
@@ -98,7 +96,6 @@ public class BiMessageConsumer {
         }
         userInput.append(userGoal).append("\n");
         userInput.append("原始数据：").append("\n");
-        userInput.append(csvData).append("\n");
         return userInput.toString();
     }
 

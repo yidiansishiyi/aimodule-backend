@@ -21,4 +21,11 @@ class ChartMapperTest {
         List<Map<String, Object>> resultData = chartMapper.queryChartData(querySql);
         System.out.println(resultData);
     }
+
+    @Test
+    void createrProcedure() {
+        chartMapper.getOriginalChartByID();
+        chartMapper.createrProcedure();
+        System.out.println("resultData");
+    }
 }

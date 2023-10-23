@@ -1,27 +1,20 @@
 package com.yidiansishiyi.aimodule.model.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 图表信息表
+ * 接口信息
  *
- * @TableName chart
  */
-@TableName(value = "chart")
-@Builder
+@TableName(value ="interface_info")
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class Chart implements Serializable {
+public class InterfaceInfo implements Serializable {
     /**
-     * id
+     * 主键
      */
     @TableId(type = IdType.AUTO)
     private Long id;
@@ -32,44 +25,59 @@ public class Chart implements Serializable {
     private String name;
 
     /**
-     * 分析目标
+     * 描述
      */
-    private String goal;
+    private String description;
 
     /**
-     * 图表类型
+     * 接口地址
      */
-    private String chartType;
+    private String url;
 
     /**
-     * 生成的图表数据
+     * 请求参数
+     * [
+     *   {"name": "username", "type": "string"}
+     * ]
      */
-    private String genChart;
+    private String requestParams;
 
     /**
-     * 生成的分析结论
+     * 请求头
      */
-    private String genResult;
+    private String requestHeader;
 
     /**
-     * 任务状态
+     * 响应头
      */
-    private String status;
+    private String responseHeader;
 
     /**
-     * 执行信息
+     * 接口状态（0-关闭，1-开启）
      */
-    private String execMessage;
+    private Integer status;
 
     /**
-     * 表头信息
+     * 请求类型
      */
-    private String meterHeader;
+    private String method;
 
     /**
-     * 用户 id
+     * 创建人
      */
     private Long userId;
+
+
+    /**
+     * accessKey
+     */
+    private String accessKey;
+
+
+    /**
+     * secretKey
+     */
+    private String secretKey;
 
     /**
      * 创建时间
@@ -82,7 +90,7 @@ public class Chart implements Serializable {
     private Date updateTime;
 
     /**
-     * 是否删除
+     * 是否删除(0-未删, 1-已删)
      */
     @TableLogic
     private Integer isDelete;
