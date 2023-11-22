@@ -11,24 +11,34 @@ import com.yidiansishiyi.aimodule.common.DeleteRequest;
 import com.yidiansishiyi.aimodule.common.ErrorCode;
 import com.yidiansishiyi.aimodule.constant.CommonConstant;
 import com.yidiansishiyi.aimodule.exception.BusinessException;
+import com.yidiansishiyi.aimodule.mapper.ChartMapper;
 import com.yidiansishiyi.aimodule.mapper.UserMapper;
 import com.yidiansishiyi.aimodule.model.dto.user.UserQueryRequest;
+import com.yidiansishiyi.aimodule.model.entity.Chart;
 import com.yidiansishiyi.aimodule.model.entity.User;
 import com.yidiansishiyi.aimodule.model.enums.UserRoleEnum;
 import com.yidiansishiyi.aimodule.model.vo.LoginUserVO;
 import com.yidiansishiyi.aimodule.model.vo.UserVO;
 import com.yidiansishiyi.aimodule.service.UserService;
 import com.yidiansishiyi.aimodule.utils.SqlUtils;
+import jodd.io.FileUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.yidiansishiyi.aimodule.constant.UserConstant.USER_LOGIN_STATE;
@@ -284,4 +294,135 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 sortField);
         return queryWrapper;
     }
+
+    @Resource
+    private ChartMapper chartMapper;
+
+    void setChartMapper() {
+
+        LambdaQueryWrapper<Chart> chartLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        chartLambdaQueryWrapper.eq(Chart::getCreateTime,"createTime");
+        User testUser = User.builder()
+                .userName("测试回滚")
+                .userAvatar("zzzz")
+                .userPassword("password")
+                .userAccount("test")
+                .build();
+        int insert1 = userMapper.insert(testUser);
+        Chart testChart = Chart.builder()
+                .userId(00000000L)
+                .name("测试图标实现")
+                .build();
+        int insert = chartMapper.insert(testChart);
+    }
+
+    @Override
+    public boolean testTransactional() {
+        setChartMapper();
+
+        try {
+            ArrayList<User> charts = new ArrayList<>();
+            for (int i = 0; i < 100; i++) {
+                charts.add(User.builder()
+                        .userName("测试回滚" + i)
+                        .userAvatar("zzzz")
+                        .userPassword("password")
+                        .userAccount("test")
+                        .build());
+            }
+            this.saveBatch(charts,10);
+
+
+        } catch (Exception e) {
+            log.error("回滚测试" + e.getMessage());
+//            throw new RuntimeException();
+            throw new BusinessException(200,"除零错误");
+//            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public String generateDDL(String existingCreateSQL, String localSQL) throws IOException {
+
+        HashMap<String, String> extractColumns = extractColumns(existingCreateSQL);
+        // 根据表明差数据库获取创表语句
+        String tableName = extractColumns.get("TableName");
+//        String selectCreateSQL = screenServicePortraitDao.getCreateSQL(tableName);
+        String addDDL = generateDDLze(extractColumns, localSQL);
+        // 新增文档写入数据, 写入查询 sql 传入 sql 和 ddl sql
+        // 新增接口
+        String DDL = addDDL + "\n" + "\n" + existingCreateSQL + "\n" + "\n" + localSQL;
+        File file = new File("D:\\files\\" + tableName + ".txt");
+        FileUtil.writeString(file, DDL);
+        String s1 = FileUtil.readString(new File("D:\\files\\creatSql.txt"));
+
+        return file.getPath();
+    }
+
+    public String generateDDLze(Map columns,String sql){
+        StringBuilder create = new StringBuilder();
+        Object tableName = columns.get("TableName");
+        // 找到创表语句主体部分
+        String tableBody = extractBetweenSymbols(sql, "(", ") ENGINE");
+        String[] lines = tableBody.split(",\n");
+        for (String line : lines) {
+            String columnName = extractBetweenSymbols(line, "`", "`");
+            boolean b = columns.containsKey(columnName);
+            if (columns.containsKey(columnName)) {
+                String o = (String)columns.get(columnName);
+                if (o.equals(line)) {
+                    continue;
+                }
+                create.append("alter table ").append(tableName).append(" change ").append(columnName).append(" ").append(line);
+//                create.deleteCharAt(create.length() - 1);
+                create.append(";\n");
+                continue;
+            }
+            create.append("alter table ").append(tableName).append(" add ").append(line);
+//            create.deleteCharAt(create.length() - 1);
+            create.append(";\n");
+        }
+        return create.toString();
+    }
+
+    public HashMap<String, String> extractColumns(String existingCreateSQL) {
+        HashMap<String, String> tableInformation = new HashMap<>();
+
+        // 找到表名
+        String tableNameRegex = "CREATE TABLE `(.*?)`";
+        Pattern tableNamePattern = Pattern.compile(tableNameRegex);
+        Matcher tableNameMatcher = tableNamePattern.matcher(existingCreateSQL);
+        if (tableNameMatcher.find()) {
+            String tableName = tableNameMatcher.group(1);
+            tableInformation.put("TableName", tableName);
+        }
+
+        // 找到创表语句主体部分
+        String tableBody = extractBetweenSymbols(existingCreateSQL, "(", ") ENGINE");
+        String[] lines = tableBody.split(",\n");
+        for (String line : lines) {
+            String columnName = extractBetweenSymbols(line, "`", "`");
+            if (tableInformation.containsKey(columnName)) {
+                continue;
+            }
+            tableInformation.put(columnName, line);
+        }
+
+        return tableInformation;
+    }
+
+    public String extractBetweenSymbols(String input, String startSymbol, String endSymbol) {
+        int startIndex = input.indexOf(startSymbol);
+        int endIndex = input.indexOf(endSymbol, startIndex + 1);
+
+        if (startIndex != -1 && endIndex != -1) {
+            return input.substring(startIndex + 1, endIndex);
+        } else {
+            return null;
+        }
+    }
+
+
 }

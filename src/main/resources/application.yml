@@ -23,6 +23,12 @@ spring:
 #    username: yidiansishiyi
 #    password: zyeE75mZjmxm7XGT
 
+#  datasource:
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    url: jdbc:mysql://localhost:3306/cx_screen?rewriteBatchedStatements=true
+#    username: root
+#    password: root
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/yidiansishiyi?rewriteBatchedStatements=true
@@ -69,12 +75,12 @@ spring:
     port: 6379
     host: 124.222.184.3
     timeout: 5000
-    password: Yidiansishiyi0214
+    password: SanqiYidiansishiyi
   redisson:
     database: 1
     host: 124.222.184.3
     port: 6379
-    password: Yidiansishiyi0214
+    password: SanqiYidiansishiyi
   thread:
     pool:
       capacity: 40
@@ -146,10 +152,10 @@ wx:
 # todo 需替换配置
 cos:
   client:
-    accessKey: xxx
-    secretKey: xxx
-    region: xxx
-    bucket: xxx
+    accessKey: AKIDzrX0FKEuNeibIm383oSxFJemfMsCJCvR
+    secretKey: OZZLuFMDsJXXIp9HCuOfsrcAUZQ5Xlma
+#    region: xxx
+    bucket: yidiansishiyi-1315634809
 # 鱼聪明 AI 配置（https://yucongming.com/）
 yuapi:
   client:

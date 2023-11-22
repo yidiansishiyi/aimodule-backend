@@ -10,25 +10,26 @@ import com.yidiansishiyi.aimodule.common.ResultUtils;
 import com.yidiansishiyi.aimodule.constant.UserConstant;
 import com.yidiansishiyi.aimodule.exception.BusinessException;
 import com.yidiansishiyi.aimodule.exception.ThrowUtils;
-import com.yidiansishiyi.aimodule.mapper.ChartMapper;
 import com.yidiansishiyi.aimodule.model.dto.chart.*;
 import com.yidiansishiyi.aimodule.model.entity.Chart;
 import com.yidiansishiyi.aimodule.model.entity.User;
+import com.yidiansishiyi.aimodule.model.vo.AAsql;
 import com.yidiansishiyi.aimodule.model.vo.BiResponse;
 import com.yidiansishiyi.aimodule.model.vo.ChartOriginalVO;
 import com.yidiansishiyi.aimodule.service.ChartService;
 import com.yidiansishiyi.aimodule.service.UserService;
 import com.yidiansishiyi.aimodule.service.WmsensitiveService;
 import com.yidiansishiyi.aimodule.utils.ExcelUtils;
+import io.swagger.annotations.ApiOperation;
 import jodd.io.FileUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.time.StopWatch;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Profile;
 
 
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -38,11 +39,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
 
-import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
 
@@ -71,10 +68,29 @@ public class ChartController {
 
     private Date initialTime = new Date();
 
+
+    @ApiOperation("获取创建表 ddl")
+    @PostMapping("/generateDDL")
+    public String generateDDL(@RequestBody AAsql sql) throws IOException {
+        String s = userService.generateDDL(sql.getExistingCreateSQL(), sql.getLocalSQL());
+        return s;
+    }
+
+
     @Profile({"dev", "local"})
     @PostMapping("/ceses")
     public boolean ceses(String ceses) {
         return wmsensitiveService.checkSensitiveWords(ceses);
+    }
+
+    @Profile({"dev", "local"})
+    @PostMapping("/testTransactional")
+    @Transactional(rollbackFor = Exception.class)
+    public boolean testTransactional() {
+
+        boolean testT = userService.testTransactional();
+
+        return testT;
     }
 
     @Profile({"dev", "local"})

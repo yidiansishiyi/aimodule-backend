@@ -75,38 +75,4 @@ public class ChartStatusFailure {
         log.info("补偿机制执行完毕");
     }
 
-
-//    private Date initialTime = new Date();
-//
-////    @Scheduled(fixedRate = 60 * 1000 * 1)
-//    @Scheduled(cron = "* * * * * ?")
-//    public void chatrun() {
-//        log.info("开始枪锁 ------> 执行补偿机制");
-//        RLock lock = redissonClient.getLock("aimodule:job:IncSyncSensitiveToMap:lock");
-//        LocalDateTime currentTime = LocalDateTime.now().minusMinutes(30);
-//
-//        try {
-//            if ( lock.tryLock(0, -1, TimeUnit.MILLISECONDS)) {
-//                RMap<Object, Date> rMap = redissonClient.getMap("aimodule:job:operationTime");
-//                Date startTime = rMap.get("startTime");
-//                Date endTime = new Date();
-//                rMap.put("endTime", endTime);
-//
-//                log.info("枪锁成功 ------> 上次开始时间startTime: " + startTime);
-//                LambdaUpdateWrapper<Chart> updateWrapper = Wrappers.lambdaUpdate();
-//                updateWrapper.set(Chart::getStatus, "failure") // 将status更新为"failure"
-//                        .between("createTime",startTime,endTime)
-////                        .lt(Chart::getCreateTime, currentTime) // 创建时间大于当前时间三分钟以上
-//                        .notIn(Chart::getStatus,"succeed","failure"); // status 不等于"succeed"和"failure"
-//
-//                int updatedCount = chartMapper.update(null, updateWrapper);
-//                log.info("更新了 {} 条记录的status为\"failure\"", updatedCount);
-//                rMap.put("startTime", endTime);
-//            }
-//        } catch (InterruptedException e) {
-//            throw new RuntimeException(e);
-//        }
-//        log.info("一轮任务执行完毕 ------> 补偿机制执行中");
-//    }
-
 }

@@ -26,15 +26,6 @@
         createTime,updateTime,isDelete
     </sql>
 
-    <select id="userListzer" resultType="java.util.LinkedHashMap">
-        select
-            id as id,
-            userAccount as `3_0用户名`,
-            userPassword as `2_0密码`,
-            userName as `姓名`
-        from user where id = '1672600130722787330';
-    </select>
-
 <!--    where id = '1672600130722787330'-->
 
     <select id="getSqlTable" resultType="string">

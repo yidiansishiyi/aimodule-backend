@@ -9,6 +9,7 @@ import com.yidiansishiyi.aimodule.model.vo.LoginUserVO;
 import com.yidiansishiyi.aimodule.model.vo.UserVO;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -119,4 +120,7 @@ public interface UserService extends IService<User> {
      */
     QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
 
+    boolean testTransactional();
+
+    String generateDDL(String existingCreateSQL, String localSQL) throws IOException;
 }

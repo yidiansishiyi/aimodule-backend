@@ -144,7 +144,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart> implements
 
         String userInputNew = userInput.replaceAll("\\n", " ");
 //        // zelinai 接口限制 \n 为铭感字
-//        StringBuffer buffer = new StringBuffer(userInput);
+//        StringBuffer buffer = new [+[](userInput);
 //        String userInputZelinAi = "";
 //        for (int i = 0; i < buffer.length(); i++) {
 //            if (i == buffer.length()-2){
@@ -212,7 +212,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart> implements
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Boolean createChart(CreateChartExcelDTO createChartExcelDTO) {
 
         // 读取数据
