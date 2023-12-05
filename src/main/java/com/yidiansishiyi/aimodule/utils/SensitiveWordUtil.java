@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class SensitiveWordUtil {
 
-    public static Map<String, Object> dictionaryMap = new HashMap<>();
+    public static volatile Map<String, Object> dictionaryMap = new HashMap<>();
 
     public static Map<String, Object> getDictionaryMap() {
         return dictionaryMap;
