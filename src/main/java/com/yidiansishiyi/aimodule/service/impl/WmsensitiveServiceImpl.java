@@ -7,14 +7,11 @@ import com.yidiansishiyi.aimodule.model.entity.Wmsensitive;
 import com.yidiansishiyi.aimodule.service.WmsensitiveService;
 import com.yidiansishiyi.aimodule.utils.SensitiveWordUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
